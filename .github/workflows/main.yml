@@ -1,1 +1,38 @@
 
+name: Deploy to cPanel
+
+on:
+  push:
+    branches:
+      - master
+env:
+  IMAGE_NAME: docker push hmeressa/my-app:1
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v2
+
+      - name: Build the Docker image
+        run: docker build -t Dockerfile .
+
+      - name: Log in to Docker Hub (or any other Docker registry you are using)
+        run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Push the Docker image to Docker Hub (or any other Docker registry)
+        run: docker push your_image_name
+
+      - name: SSH into cPanel and deploy the app
+        uses: appleboy/ssh-action@master
+        with:
+          host: your_cpanel_host
+          username: ${{ secrets.CPANEL_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            docker stop your_container_name || true
+            docker rm your_container_name || true
+            docker pull your_image_name
+            docker run -d --name your_container_name -p 80:80 your_image_name
